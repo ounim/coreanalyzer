@@ -1,3 +1,4 @@
+use_cxx11()
 file (GLOB_RECURSE PROJECT_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
 set (PROJECT_BIN ${PROJECT_NAME})
 

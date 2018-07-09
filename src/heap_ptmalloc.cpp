@@ -8,8 +8,10 @@
 #include <assert.h>
 
 #include "segment.h"
+#include "util.h"
 #include "heap_ptmalloc.h"
-
+#include <unordered_map>
+#include <map>
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 
 /***************************************************************************
@@ -233,6 +235,7 @@ static unsigned int g_arena_buf_sz = 0;
 static struct ca_heap** g_sorted_heaps = NULL;	// heaps sorted by virtual address
 static unsigned int g_heap_cnt = 0;
 
+static std::unordered_map<address_t, unsigned long> vptrmap = std::unordered_map<address_t, unsigned long>();
 /*
  * Forward declaration
  */
@@ -390,25 +393,25 @@ bool heap_walk(address_t heapaddr, bool verbose)
 			else if (arena->mType == ENUM_HEAP_MMAP_BLOCK)
 				CA_PRINT("\tmmap block");
 			if (arena->mArenaAddr)
-				CA_PRINT(" ("PRINT_FORMAT_POINTER"): ["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"]\n",
+				CA_PRINT(" (" PRINT_FORMAT_POINTER "): ["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"]\n",
 					arena->mArenaAddr, heap_begin, heap_end);
 			return traverse_heap_blocks(heap, true, NULL, NULL, NULL, NULL);
 		}
 		else
 		{
-			CA_PRINT("Failed to find heap region that contains address "PRINT_FORMAT_POINTER"\n", heapaddr);
+			CA_PRINT("Failed to find heap region that contains address " PRINT_FORMAT_POINTER "\n", heapaddr);
 			return false;
 		}
 	}
 
 	// Tuning and stats info
 	CA_PRINT("\tTuning params & stats:\n");
-	CA_PRINT("\t\tmmap_threshold="PRINT_FORMAT_SIZE"\n", mparams.mmap_threshold);
+	CA_PRINT("\t\tmmap_threshold=" PRINT_FORMAT_SIZE "\n", mparams.mmap_threshold);
 	CA_PRINT("\t\tpagesize=%d\n", mparams.pagesize);
 	CA_PRINT("\t\tn_mmaps=%d\n", mparams.n_mmaps);
 	CA_PRINT("\t\tn_mmaps_max=%d\n", mparams.n_mmaps_max);
 	CA_PRINT("\t\ttotal mmap regions created=%d\n", mparams.max_n_mmaps);
-	CA_PRINT("\t\tmmapped_mem="PRINT_FORMAT_SIZE"\n", mparams.mmapped_mem);
+	CA_PRINT("\t\tmmapped_mem=" PRINT_FORMAT_SIZE "\n", mparams.mmapped_mem);
 	CA_PRINT("\t\tsbrk_base=%p\n", mparams.sbrk_base);
 
 	if (verbose)
@@ -429,11 +432,11 @@ bool heap_walk(address_t heapaddr, bool verbose)
 
 		if (arena->mType == ENUM_HEAP_MAIN)
 		{
-			CA_PRINT("\tMain arena ("PRINT_FORMAT_POINTER") owns regions:\n", arena->mArenaAddr);
+			CA_PRINT("\tMain arena (" PRINT_FORMAT_POINTER ") owns regions:\n", arena->mArenaAddr);
 		}
 		else if (arena->mType == ENUM_HEAP_DYNAMIC)
 		{
-			CA_PRINT("\tDynamic arena ("PRINT_FORMAT_POINTER") owns regions:\n", arena->mArenaAddr);
+			CA_PRINT("\tDynamic arena (" PRINT_FORMAT_POINTER ") owns regions:\n", arena->mArenaAddr);
 		}
 		else if (arena->mType == ENUM_HEAP_MMAP_BLOCK)
 		{
@@ -454,7 +457,7 @@ bool heap_walk(address_t heapaddr, bool verbose)
 			if (arena->mType == ENUM_HEAP_MMAP_BLOCK)
 				num_mmap++;
 
-			CA_PRINT("\t\t["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"] Total ",
+			CA_PRINT("\t\t[" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER"] Total ",
 					heap->mStartAddr + size_t_sz, heap->mEndAddr);
 			print_size(heap->mEndAddr - heap->mStartAddr);
 
@@ -496,19 +499,34 @@ bool heap_walk(address_t heapaddr, bool verbose)
 		print_size(totoal_inuse_bytes + totoal_free_bytes);
 		CA_PRINT("\n");
 
-		CA_PRINT("\tTotal "PRINT_FORMAT_SIZE" blocks in-use of ", total_num_inuse);
+		CA_PRINT("\tTotal " PRINT_FORMAT_SIZE " blocks in-use of ", total_num_inuse);
 		print_size(totoal_inuse_bytes);
 		CA_PRINT("\n");
 
-		CA_PRINT("\tTotal "PRINT_FORMAT_SIZE" blocks free of ",	total_num_free);
+		CA_PRINT("\tTotal " PRINT_FORMAT_SIZE " blocks free of ",	total_num_free);
 		print_size(totoal_free_bytes);
 		CA_PRINT("\n\n");
 
 		if (verbose)
 			display_mem_histogram("\t");
+
 	}
 	else
 		CA_PRINT("%d Errors encountered while walking the heap!\n", num_error);
+        if (verbose)
+            display_mem_histogram("\t");
+        std::map<unsigned long, address_t> sorted_by_size;
+
+        for(auto x : vptrmap)
+        {
+            sorted_by_size[x.second] = x.first;
+        }
+        auto iter = sorted_by_size.rbegin();
+        for(int i = 0; i<10; ++i)
+        {
+            CA_PRINT("size: %ld (_vptr=" PRINT_FORMAT_POINTER ")\n", iter->first, iter->second);
+            ++iter;
+        }
 
 	return rc;
 }
@@ -951,7 +969,7 @@ static struct ca_arena* build_arena(address_t arena_vaddr, enum HEAP_TYPE type)
 				return NULL;
 			}
 		} else {
-			CA_PRINT("Failed to read arena at "PRINT_FORMAT_POINTER"\n", arena_vaddr);
+			CA_PRINT("Failed to read arena at " PRINT_FORMAT_POINTER "\n", arena_vaddr);
 			release_ca_arena(arena);
 			return NULL;
 		}
@@ -968,7 +986,7 @@ static struct ca_arena* build_arena(address_t arena_vaddr, enum HEAP_TYPE type)
 		segment = get_segment(top_addr, mchunk_sz);
 		if (!segment || !read_memory_wrapper(segment, top_addr, &top_chunk, mchunk_sz))
 		{
-			CA_PRINT("Failed to read arena's top chunk at "PRINT_FORMAT_POINTER"\n", top_addr);
+			CA_PRINT("Failed to read arena's top chunk at " PRINT_FORMAT_POINTER "\n", top_addr);
 			release_ca_arena(arena);
 			return NULL;
 		}
@@ -1039,7 +1057,7 @@ static struct ca_arena* build_arena(address_t arena_vaddr, enum HEAP_TYPE type)
 			else
 			{
 				// we shouldn't get here, otherwise the core is seriously wrong
-				CA_PRINT("Failed to find the segment of sbrk_base "PRINT_FORMAT_POINTER"\n", heap->mStartAddr);
+				CA_PRINT("Failed to find the segment of sbrk_base " PRINT_FORMAT_POINTER "\n", heap->mStartAddr);
 				free (heap);
 			}
 			// then, get the heap of the top-chunk, which is mmap-ed due to failure of sbrk()
@@ -1093,7 +1111,7 @@ static struct ca_arena* build_arena(address_t arena_vaddr, enum HEAP_TYPE type)
 			segment = get_segment(h_vaddr, hinfo_sz);
 			if (!segment || !read_memory_wrapper(segment, h_vaddr, &hinfo, hinfo_sz))
 			{
-				CA_PRINT("Failed to read heap_info at "PRINT_FORMAT_POINTER"\n", h_vaddr);
+				CA_PRINT("Failed to read heap_info at " PRINT_FORMAT_POINTER "\n", h_vaddr);
 				break;
 			}
 			heap = (struct ca_heap*) malloc(sizeof(struct ca_heap));
@@ -1168,7 +1186,7 @@ static struct ca_arena* build_arena(address_t arena_vaddr, enum HEAP_TYPE type)
 					union ca_malloc_chunk mmap_chunk;
 					if (!read_memory_wrapper(hseg, cursor, &mmap_chunk, mchunk_sz))
 					{
-						CA_PRINT("Failed to read memory at "PRINT_FORMAT_POINTER" while finding mmap blocks\n", cursor);
+						CA_PRINT("Failed to read memory at " PRINT_FORMAT_POINTER " while finding mmap blocks\n", cursor);
 						break;
 					}
 					// such a block shall have
@@ -1252,7 +1270,7 @@ static bool build_heaps_internal_32(address_t main_arena_vaddr, address_t mparam
 
 	if (!rc)
 	{
-		CA_PRINT("Failed to read global variable mp_ at "PRINT_FORMAT_POINTER"\n", mparams_vaddr);
+		CA_PRINT("Failed to read global variable mp_ at " PRINT_FORMAT_POINTER "\n", mparams_vaddr);
 		return false;
 	}
 
@@ -1344,7 +1362,7 @@ static bool build_heaps_internal_64(address_t main_arena_vaddr, address_t mparam
 
 	if (!rc)
 	{
-		CA_PRINT("Failed to read global variable mp_ at "PRINT_FORMAT_POINTER"\n", mparams_vaddr);
+		CA_PRINT("Failed to read global variable mp_ at " PRINT_FORMAT_POINTER "\n", mparams_vaddr);
 		return false;
 	}
 
@@ -1724,13 +1742,13 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 			union ca_malloc_chunk fast_chunk;
 			if (chunk_vaddr & amask)
 			{
-				CA_PRINT("\nError: chunk at "PRINT_FORMAT_POINTER" in fastbin[%d] is misaligned\n",
+				CA_PRINT("\nError: chunk at " PRINT_FORMAT_POINTER " in fastbin[%d] is misaligned\n",
 						chunk_vaddr, fbi); /*T*/
 				error_found = true;
 			}
 			else if (!read_memory_wrapper(NULL, chunk_vaddr, &fast_chunk, mchunk_sz))
 			{
-				CA_PRINT("\nFailed to get the chunk at "PRINT_FORMAT_POINTER" in fastbin[%d]\n",
+				CA_PRINT("\nFailed to get the chunk at " PRINT_FORMAT_POINTER " in fastbin[%d]\n",
 						chunk_vaddr, fbi); /*T*/
 				error_found = true;
 			}
@@ -1739,7 +1757,7 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 				if (chunk_prev_vaddr)
 				{
 					if (read_memory_wrapper(NULL, chunk_prev_vaddr, &fast_chunk, mchunk_sz))
-						CA_PRINT("\tChunk address comes from previous fastbin chunk at "PRINT_FORMAT_POINTER" with fd="PRINT_FORMAT_POINTER"\n",
+						CA_PRINT("\tChunk address comes from previous fastbin chunk at " PRINT_FORMAT_POINTER " with fd="PRINT_FORMAT_POINTER"\n",
 								chunk_prev_vaddr, ca_chunk_fd(ptr_bit, &fast_chunk));
 				}
 				else
@@ -1749,7 +1767,7 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 			}
 			//if (bDebug)
 			//{
-			//	CA_PRINT("Fastbin[%d] Chunk at "PRINT_FORMAT_POINTER", its size tag is "PRINT_FORMAT_POINTER", fd="PRINT_FORMAT_POINTER"\n",
+			//	CA_PRINT("Fastbin[%d] Chunk at " PRINT_FORMAT_POINTER ", its size tag is "PRINT_FORMAT_POINTER", fd="PRINT_FORMAT_POINTER"\n",
 			//			fbi, chunk_vaddr, ptr_bit==64 ? fast_chunk.chunk.size : fast_chunk.chunk_32.size, ca_chunk_fd(ptr_bit, &fast_chunk));
 			//}
 			chunk_prev_vaddr = chunk_vaddr;
@@ -1770,7 +1788,7 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 		//{
 		//	if (bi < 2)
 		//	{
-		//		CA_PRINT("Bin[%d]="PRINT_FORMAT_POINTER"\n", bi, chunk_vaddr);
+		//		CA_PRINT("Bin[%d]=" PRINT_FORMAT_POINTER "\n", bi, chunk_vaddr);
 		//	}
 		//}
 		if (bi >= 2)
@@ -1783,12 +1801,12 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 			}
 			//if (bDebug)
 			//{
-			//	CA_PRINT("Bin[%d]="PRINT_FORMAT_POINTER", Bin[%d]="PRINT_FORMAT_POINTER"\n", bi, chunk_vaddr, bi+1, chunk_next_vaddr);
+			//	CA_PRINT("Bin[%d]=" PRINT_FORMAT_POINTER ", Bin[%d]="PRINT_FORMAT_POINTER"\n", bi, chunk_vaddr, bi+1, chunk_next_vaddr);
 			//}
 		}
 		if (!read_memory_wrapper(NULL, chunk_vaddr, &chunk_first, mchunk_sz))
 		{
-			CA_PRINT("Failed to get the first chunk at "PRINT_FORMAT_POINTER" in bin[%d]\n",
+			CA_PRINT("Failed to get the first chunk at " PRINT_FORMAT_POINTER " in bin[%d]\n",
 					chunk_vaddr, bi); /*T*/
 			rc = false;
 		}
@@ -1800,24 +1818,24 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 			{
 				//if (bDebug)
 				//{
-				//	CA_PRINT("Bin[%d] Chunk at "PRINT_FORMAT_POINTER", its size tag is "PRINT_FORMAT_POINTER", fd="PRINT_FORMAT_POINTER", bk="PRINT_FORMAT_POINTER"\n",
+				//	CA_PRINT("Bin[%d] Chunk at " PRINT_FORMAT_POINTER ", its size tag is "PRINT_FORMAT_POINTER", fd="PRINT_FORMAT_POINTER", bk="PRINT_FORMAT_POINTER"\n",
 				//			bi, chunk_vaddr, ptr_bit==64 ? chunk.chunk.size : chunk.chunk_32.size, ca_chunk_fd(ptr_bit, &chunk), ca_chunk_bk(ptr_bit, &chunk));
 				//}
 				if (chunk_vaddr & amask)
 				{
-					CA_PRINT("\nError: chunk at "PRINT_FORMAT_POINTER" in bin[%d] is misaligned\n",
+					CA_PRINT("\nError: chunk at " PRINT_FORMAT_POINTER " in bin[%d] is misaligned\n",
 							chunk_vaddr, bi); /*T*/
 					error_found = true;
 				}
 				else if (!read_memory_wrapper(NULL, chunk_vaddr, &chunk, mchunk_sz))
 				{
-					CA_PRINT("\nFailed to get the chunk at "PRINT_FORMAT_POINTER" in bin[%d]\n",
+					CA_PRINT("\nFailed to get the chunk at " PRINT_FORMAT_POINTER " in bin[%d]\n",
 							chunk_vaddr, bi); /*T*/
 					error_found = true;
 				}
 				else if (chunk_prev_vaddr && ca_chunk_bk(ptr_bit, &chunk) != chunk_prev_vaddr)
 				{
-					CA_PRINT("\nError: chunk at "PRINT_FORMAT_POINTER" witch bk="PRINT_FORMAT_POINTER" that does not point to previous chunk\n",
+					CA_PRINT("\nError: chunk at " PRINT_FORMAT_POINTER " witch bk="PRINT_FORMAT_POINTER" that does not point to previous chunk\n",
 							chunk_vaddr, ca_chunk_bk(ptr_bit, &chunk));
 					error_found = true;
 				}
@@ -1825,13 +1843,13 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 				{
 					if (ca_chunk_bk(ptr_bit, &chunk_first) != chunk_vaddr)
 					{
-						CA_PRINT("\nError: bk="PRINT_FORMAT_POINTER" of first chunk does not point to last chunk="PRINT_FORMAT_POINTER"\n",
+						CA_PRINT("\nError: bk=" PRINT_FORMAT_POINTER " of first chunk does not point to last chunk="PRINT_FORMAT_POINTER"\n",
 								ca_chunk_bk(ptr_bit, &chunk_first), chunk_vaddr);
 						error_found = true;
 					}
 					if (ca_chunk_fd(ptr_bit, &chunk) != chunk_first_vaddr)
 					{
-						CA_PRINT("\nError: fd="PRINT_FORMAT_POINTER" of last chunk does not point to first chunk="PRINT_FORMAT_POINTER"\n",
+						CA_PRINT("\nError: fd=" PRINT_FORMAT_POINTER " of last chunk does not point to first chunk="PRINT_FORMAT_POINTER"\n",
 								ca_chunk_fd(ptr_bit, &chunk), chunk_first_vaddr);
 						error_found = true;
 					}
@@ -1841,7 +1859,7 @@ static bool check_bin_and_fastbin(struct ca_arena* arena)
 					if (chunk_prev_vaddr)
 					{
 						if (read_memory_wrapper(NULL, chunk_prev_vaddr, &chunk, mchunk_sz))
-							CA_PRINT("\tChunk address comes from previous bin[%d] chunk at "PRINT_FORMAT_POINTER" with {fd="PRINT_FORMAT_POINTER", bk="PRINT_FORMAT_POINTER"}\n",
+							CA_PRINT("\tChunk address comes from previous bin[%d] chunk at " PRINT_FORMAT_POINTER " with {fd="PRINT_FORMAT_POINTER", bk="PRINT_FORMAT_POINTER"}\n",
 									bi, chunk_prev_vaddr, ca_chunk_fd(ptr_bit, &chunk), ca_chunk_bk(ptr_bit, &chunk));
 					}
 					else
@@ -1884,12 +1902,11 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 	address_t heap_begin = heap->mStartAddr - size_t_sz;
 	address_t heap_end   = heap->mEndAddr;
 	struct ca_arena* arena = heap->mArena;
-
 	// Arena walk starting with the first chunk
 	cursor = heap_begin;
 	if (!read_memory_wrapper(NULL, cursor, &achunk, mchunk_sz))
 	{
-		CA_PRINT("Failed to get the first chunk at "PRINT_FORMAT_POINTER"\n", cursor);
+		CA_PRINT("Failed to get the first chunk at " PRINT_FORMAT_POINTER "\n", cursor);
 		return false;
 	}
 
@@ -1899,12 +1916,13 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 	while (cursor < heap_end)
 	{
 		int lbFreeBlock, lbLastBlock;
+                int bucketNb = 0;
 		// check if chunk size is within valid range
 		size_t chunksz = ca_chunksize(ptr_bit, &achunk);
 		if (cursor > (address_t)(-chunksz) || cursor < heap_begin || cursor > heap_end
 			|| cursor+chunksz+mchunk_sz > heap_end+0x100)
 		{
-			CA_PRINT("Failed to walk arena. The chunk at "PRINT_FORMAT_POINTER" may be corrupted. Its size tag is "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to walk arena. The chunk at " PRINT_FORMAT_POINTER " may be corrupted. Its size tag is "PRINT_FORMAT_POINTER"\n",
 					cursor, ptr_bit==64 ? achunk.chunk.size : achunk.chunk_32.size);
 			return false;
 		}
@@ -1929,7 +1947,7 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 			num_free++;
 			totoal_free_bytes += chunksz - size_t_sz;
 			//if (bVerbose)
-			//	CA_PRINT("\t\t["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"] fence post\n", cursor+size_t_sz*2, heap_end);
+			//	CA_PRINT("\t\t[" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER"] fence post\n", cursor+size_t_sz*2, heap_end);
 			lbFreeBlock = true;
 			add_block_mem_histogram(chunksz - size_t_sz, false, 1);
 		}
@@ -1939,7 +1957,7 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 			union ca_malloc_chunk next_chunk;
 			if (!read_memory_wrapper(NULL, cursor+chunksz, &next_chunk, mchunk_sz))
 			{
-				CA_PRINT("Failed to get chunk at "PRINT_FORMAT_POINTER"\n", cursor+chunksz);
+				CA_PRINT("Failed to get chunk at " PRINT_FORMAT_POINTER "\n", cursor+chunksz);
 				return false;
 			}
 
@@ -1949,7 +1967,8 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 				lbFreeBlock = false;
 				num_inuse++;
 				totoal_inuse_bytes += chunksz - size_t_sz;
-				add_block_mem_histogram(chunksz - size_t_sz, true, 1);
+				bucketNb = add_block_mem_histogram(chunksz - size_t_sz, true, 1);
+                                
 			}
 			else
 			{
@@ -1964,15 +1983,27 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 			achunk = next_chunk;
 		}
 
+                address_t vptr = print_vptr_addr(cursor+size_t_sz*2);
+                if (vptr)
+                {
+                    vptrmap[vptr] = vptrmap[vptr] + chunksz-size_t_sz;
+                }
+                
 		// print if desired
-		if (bDisplayBlocks)
+		if (false)
 		{
 			if (lbFreeBlock)
-				CA_PRINT("\t\t["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"] "PRINT_FORMAT_SIZE" bytes free\n",
+				CA_PRINT("\t\t[" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER"] "PRINT_FORMAT_SIZE" bytes free\n",
 						cursor+size_t_sz*2, cursor+chunksz+size_t_sz, chunksz-size_t_sz);
 			else
-				CA_PRINT("\t\t\t["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"] "PRINT_FORMAT_SIZE" bytes inuse\n",
-						cursor+size_t_sz*2, cursor+chunksz+size_t_sz, chunksz-size_t_sz);
+                        {
+                            if (print_vptr_addr(cursor+size_t_sz*2))
+                            {
+                                //		CA_PRINT("\t\t\t[" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER"] "PRINT_FORMAT_SIZE" bytes inuse\n",
+				//		cursor+size_t_sz*2, cursor+chunksz+size_t_sz, chunksz-size_t_sz);
+                                vptrmap[cursor+size_t_sz*2] = vptrmap[cursor+size_t_sz*2] + chunksz-size_t_sz;
+                            }
+                        }
 		}
 
 		// walk to next chunk
@@ -1989,8 +2020,8 @@ static bool traverse_heap_blocks(struct ca_heap* heap,
 	if (bDisplayBlocks)
 	{
 		CA_PRINT("\n");
-		CA_PRINT("\tTotal inuse "PRINT_FORMAT_SIZE" blocks "PRINT_FORMAT_SIZE" bytes\n", num_inuse, totoal_inuse_bytes);
-		CA_PRINT("\tTotal free "PRINT_FORMAT_SIZE" blocks "PRINT_FORMAT_SIZE" bytes\n", num_free, totoal_free_bytes);
+		CA_PRINT("\tTotal inuse " PRINT_FORMAT_SIZE " blocks "PRINT_FORMAT_SIZE" bytes\n", num_inuse, totoal_inuse_bytes);
+		CA_PRINT("\tTotal free " PRINT_FORMAT_SIZE " blocks "PRINT_FORMAT_SIZE" bytes\n", num_free, totoal_free_bytes);
 	}
 
 	if (opInuseBytes && opFreeBytes && opNumInuse && opNumFree)

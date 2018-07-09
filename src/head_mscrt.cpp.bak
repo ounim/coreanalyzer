@@ -324,8 +324,8 @@ page_walk_2008(address_t addr,			// input heap addr
 
 	if (bVerbose)
 	{
-		CA_PRINT("Total %ld inuse blocks of "PRINT_FORMAT_SIZE" bytes\n", num_inuse, inuse_bytes);
-		CA_PRINT("Total %ld free blocks of "PRINT_FORMAT_SIZE" bytes\n", num_free, free_bytes);
+		CA_PRINT("Total %ld inuse blocks of " PRINT_FORMAT_SIZE " bytes\n", num_inuse, inuse_bytes);
+		CA_PRINT("Total %ld free blocks of " PRINT_FORMAT_SIZE " bytes\n", num_free, free_bytes);
 	}
 	if (rc && opInuseBytes && opFreeBytes)
 	{
@@ -440,8 +440,8 @@ page_walk_2003(address_t addr,			// input heap addr
 
 	if (bVerbose)
 	{
-		CA_PRINT("Total %ld inuse blocks of "PRINT_FORMAT_SIZE" bytes\n", num_inuse, inuse_bytes);
-		CA_PRINT("Total %ld free blocks of "PRINT_FORMAT_SIZE" bytes\n", num_free, free_bytes);
+		CA_PRINT("Total %ld inuse blocks of " PRINT_FORMAT_SIZE " bytes\n", num_inuse, inuse_bytes);
+		CA_PRINT("Total %ld free blocks of " PRINT_FORMAT_SIZE " bytes\n", num_free, free_bytes);
 	}
 	if (rc && opInuseBytes && opFreeBytes)
 	{
@@ -474,7 +474,7 @@ static bool heap_walk_2008(bool ibDryRun, bool verbose)
 			return false;
 
 		if (!ibDryRun)
-			CA_PRINT("\theap "PRINT_FORMAT_POINTER" ...\n", heap_vaddr);
+			CA_PRINT("\theap " PRINT_FORMAT_POINTER " ...\n", heap_vaddr);
 		// segments are on a doubly-linked list
 		// _HEAP.SegmentList is the sentinel LIST_ENTRY
 		sentinel = (address_t) &((HEAP_2008*)heap_vaddr)->SegmentList;
@@ -505,12 +505,12 @@ static bool heap_walk_2008(bool ibDryRun, bool verbose)
 				size_t inuse_bytes = 0, free_bytes = 0;
 				unsigned long num_inuse = 0, num_free = 0;
 
-				CA_PRINT("\t\tsegment "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" ",
+				CA_PRINT("\t\tsegment " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" ",
 						(address_t)heap_seg.BaseAddress, seg_end);
 				if (!page_walk_internal_2008(&heap, &heap_seg, seg_addr, 0, false, NULL, &inuse_bytes, &free_bytes, &num_inuse, &num_free))
 				{
 					err_count++;
-					CA_PRINT("==> Error found in this segment (!heap "PRINT_FORMAT_POINTER" for more detail) <==\n",
+					CA_PRINT("==> Error found in this segment (!heap " PRINT_FORMAT_POINTER " for more detail) <==\n",
 							(address_t)heap_seg.BaseAddress);
 					//break;
 				}
@@ -1018,7 +1018,7 @@ static bool heap_walk_2003(bool ibDryRun, bool verbose)
 			return false;
 
 		if (!ibDryRun)
-			CA_PRINT("\theap "PRINT_FORMAT_POINTER" ...\n", heap_vaddr);
+			CA_PRINT("\theap " PRINT_FORMAT_POINTER " ...\n", heap_vaddr);
 		// loop through all segments(up to 64) for each heap
 		for (int i=0; i<64 && heap.Segments[i]; i++)
 		{
@@ -1045,12 +1045,12 @@ static bool heap_walk_2003(bool ibDryRun, bool verbose)
 				unsigned long num_inuse = 0, num_free = 0;
 				size_t inuse_bytes = 0, free_bytes = 0;
 
-				CA_PRINT("\t\tsegment "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" ",
+				CA_PRINT("\t\tsegment " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" ",
 					heap_seg.BaseAddress, seg_end);
 				if (!page_walk_internal_2003(&heap_seg, 0, false, NULL, &inuse_bytes, &free_bytes, &num_inuse, &num_free))
 				{
 					err_count++;
-					CA_PRINT("==> Error found in this segment (!heap "PRINT_FORMAT_POINTER" for more detail) <==\n",
+					CA_PRINT("==> Error found in this segment (!heap " PRINT_FORMAT_POINTER " for more detail) <==\n",
 							heap_seg.FirstEntry);
 					//break;
 				}
@@ -1268,7 +1268,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 	{
 		if (addr < (address_t)heap_seg->BaseAddress	|| addr >= seg_end)
 		{
-			CA_PRINT("[Error] Unexpected page walk with input address "PRINT_FORMAT_POINTER"\n", addr);
+			CA_PRINT("[Error] Unexpected page walk with input address " PRINT_FORMAT_POINTER "\n", addr);
 			return false;
 		}
 		else if (opBlock && addr<(address_t)heap_seg->FirstEntry)
@@ -1305,7 +1305,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 			ucr_next = (address_t)heap_seg->UCRSegmentList.Flink;
 			/*if ((address_t)heap_seg->UCRSegmentList.Flink == ucr_sentinel)
 			{
-				CA_PRINT("[Error] Heap Segment "PRINT_FORMAT_POINTER" UCRSegmentList is empty, but NumberOfUnCommittedRanges is %d\n",
+				CA_PRINT("[Error] Heap Segment " PRINT_FORMAT_POINTER " UCRSegmentList is empty, but NumberOfUnCommittedRanges is %d\n",
 						seg_addr, heap_seg->NumberOfUnCommittedRanges);
 				return false;
 			}*/
@@ -1314,7 +1314,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 				ucr_next -= (address_t) &((HEAP_UCR_DESCRIPTOR*)0)->SegmentEntry;
 				if (!read_memory_wrapper(NULL, ucr_next, &ucr_descriptor, sizeof(ucr_descriptor)))
 				{
-					CA_PRINT("[Error] Fail to read UCRSegmentList "PRINT_FORMAT_POINTER"\n", ucr_next);
+					CA_PRINT("[Error] Fail to read UCRSegmentList " PRINT_FORMAT_POINTER "\n", ucr_next);
 					return false;
 				}
 				else if (entry_vaddr >= (address_t)ucr_descriptor.Address && entry_vaddr < (address_t)ucr_descriptor.Address + ucr_descriptor.Size)
@@ -1334,7 +1334,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 					}
 					if (bVerbose)
 					{
-						CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [Uncommitted Range]\n",
+						CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [Uncommitted Range]\n",
 								ucr_descriptor.Address, (address_t)ucr_descriptor.Address + ucr_descriptor.Size);
 					}
 					if (opFreeBytes)
@@ -1352,7 +1352,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 		// The normal block starts with HEAP_ENTRY
 		if (!read_memory_wrapper(NULL, entry_vaddr, &entry, sizeof(entry)))
 		{
-			CA_PRINT("[Error] Failed to read HEAP_ENTRY at "PRINT_FORMAT_POINTER"\n", entry_vaddr);
+			CA_PRINT("[Error] Failed to read HEAP_ENTRY at " PRINT_FORMAT_POINTER "\n", entry_vaddr);
 			return false;
 		}
 		else	// We have read HEAP_ENTRY successfully
@@ -1365,7 +1365,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 				// check the encoding byte
 				if (entry.SmallTagIndex != (bytes[0] ^ bytes[1] ^ bytes[2]) )
 				{
-					CA_PRINT("[Error] Encoding is invalid/corrupted at HEAP_ENTRY "PRINT_FORMAT_POINTER"\n", entry_vaddr);
+					CA_PRINT("[Error] Encoding is invalid/corrupted at HEAP_ENTRY " PRINT_FORMAT_POINTER "\n", entry_vaddr);
 					return false;
 				}
 			}
@@ -1375,7 +1375,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 				|| entry_vaddr + entry_sz > (address_t) heap_seg->LastValidEntry
 				|| entry_vaddr + entry_sz > seg_end)
 			{
-				CA_PRINT("[Error] HEAP_ENTRY at "PRINT_FORMAT_POINTER" has an invalid/corrupted size value %d\n",
+				CA_PRINT("[Error] HEAP_ENTRY at " PRINT_FORMAT_POINTER " has an invalid/corrupted size value %d\n",
 						entry_vaddr, entry.Size);
 				return false;
 			}
@@ -1391,7 +1391,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 			else
 				busy = false;
 			if (bVerbose)
-				CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [struct HEAP_ENTRY]\n",
+				CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [struct HEAP_ENTRY]\n",
 						entry_vaddr, user_addr);
 			// A free chunk doesn't have _CrtMemBlockHeader. If an uncommitted page
 			// follows, we can't even read enough bytes sizeof(_CrtMemBlockHeader)
@@ -1406,7 +1406,7 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 					user_addr += sizeof(_CrtMemBlockHeader);
 					user_sz = pHead.nDataSize;
 					if (bVerbose)
-						CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [struct _CrtMemBlockHeader]\n",
+						CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [struct _CrtMemBlockHeader]\n",
 								entry_vaddr + sizeof(entry), user_addr);
 				}
 			}
@@ -1414,13 +1414,13 @@ page_walk_internal_2008(HEAP_2008* heap,			// in => heap
 			if (bVerbose)
 			{
 				if (busy)
-					CA_PRINT("\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" busy [USER SPACE]\n",
+					CA_PRINT("\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" busy [USER SPACE]\n",
 						user_addr, user_addr+user_sz, user_sz);
 				else
-					CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" free [USER SPACE]\n",
+					CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" free [USER SPACE]\n",
 						user_addr, user_addr+user_sz, user_sz);
 				if (user_addr+user_sz < entry_vaddr+entry_sz)
-					CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [Unused Bytes]\n",
+					CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [Unused Bytes]\n",
 							user_addr+user_sz, entry_vaddr+entry_sz);
 			}
 			if (addr && opBlock
@@ -1942,7 +1942,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 	{
 		if (addr < (address_t)heap_seg->BaseAddress	|| addr >= seg_end)
 		{
-			CA_PRINT("[Error] Unexpected page walk with input address "PRINT_FORMAT_POINTER"\n", addr);
+			CA_PRINT("[Error] Unexpected page walk with input address " PRINT_FORMAT_POINTER "\n", addr);
 			return false;
 		}
 		else if (opBlock && addr<(address_t)heap_seg->FirstEntry)
@@ -1964,7 +1964,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 		range_vaddr = (address_t) heap_seg->UnCommittedRanges;
 		if (!read_memory_wrapper(NULL, range_vaddr, &range, sizeof(range)))
 		{
-			CA_PRINT("[Error] Failed to read _HEAP_SEGMENT::UnCommittedRanges "PRINT_FORMAT_POINTER"\n", range_vaddr);
+			CA_PRINT("[Error] Failed to read _HEAP_SEGMENT::UnCommittedRanges " PRINT_FORMAT_POINTER "\n", range_vaddr);
 			return false;
 		}
 	}
@@ -1988,7 +1988,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 		{
 			if (entry_vaddr >= (address_t)range.Address + range.Size)
 			{
-				CA_PRINT("[Error] Unexpected: uncommitted range "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" is missed\n",
+				CA_PRINT("[Error] Unexpected: uncommitted range " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" is missed\n",
 						range.Address, (address_t)range.Address + range.Size);
 				return false;
 			}
@@ -2005,7 +2005,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 			}
 			if (bVerbose)
 			{
-				CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [Uncommitted Range]\n",
+				CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [Uncommitted Range]\n",
 					range.Address, (address_t)range.Address + range.Size);
 			}
 			if (opFreeBytes)
@@ -2017,7 +2017,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 			{
 				if (!read_memory_wrapper(NULL, range_vaddr, &range, sizeof(range)))
 				{
-					CA_PRINT("[Error] Failed to read _HEAP_SEGMENT::UnCommittedRanges "PRINT_FORMAT_POINTER"\n", range_vaddr);
+					CA_PRINT("[Error] Failed to read _HEAP_SEGMENT::UnCommittedRanges " PRINT_FORMAT_POINTER "\n", range_vaddr);
 					return false;
 				}
 			}
@@ -2032,14 +2032,14 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 			// The block starts with HEAP_ENTRY
 			if (!read_memory_wrapper(NULL, entry_vaddr, &entry, sizeof(entry)))
 			{
-				CA_PRINT("[Error] Failed to read _HEAP_Entry "PRINT_FORMAT_POINTER"\n", entry_vaddr);
+				CA_PRINT("[Error] Failed to read _HEAP_Entry " PRINT_FORMAT_POINTER "\n", entry_vaddr);
 				return false;
 			}
 			entry_sz = entry.Size * sizeof(entry);
 			// HEAP_ENTRY::Size tag is often the victim of memory overrun
 			if (entry_vaddr + entry_sz > seg_end)
 			{
-				CA_PRINT("[Error] HEAP_ENTRY at "PRINT_FORMAT_POINTER" has an invalid/corrupted size value %d\n",
+				CA_PRINT("[Error] HEAP_ENTRY at " PRINT_FORMAT_POINTER " has an invalid/corrupted size value %d\n",
 						entry_vaddr, entry.Size);
 				return false;
 			}
@@ -2056,7 +2056,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 				busy = false;
 
 			if (bVerbose)
-				CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [struct HEAP_ENTRY]\n",
+				CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [struct HEAP_ENTRY]\n",
 						entry_vaddr, user_addr);
 			// A free chunk doesn't have _CrtMemBlockHeader.
 			// An in-use chunk could have no _CrtMemBlockHeader either.
@@ -2066,7 +2066,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 				_CrtMemBlockHeader pHead;
 				if (!read_memory_wrapper(NULL, user_addr, &pHead, sizeof(pHead)))
 				{
-					CA_PRINT("[Error] Failed to read _CrtMemBlockHeader "PRINT_FORMAT_POINTER"\n", user_addr);
+					CA_PRINT("[Error] Failed to read _CrtMemBlockHeader " PRINT_FORMAT_POINTER "\n", user_addr);
 					return false;
 				}
 				/* gap is filled with _bNoMansLandFill or 0xfd */
@@ -2075,7 +2075,7 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 					user_addr += sizeof(_CrtMemBlockHeader);
 					user_sz = pHead.nDataSize;
 					if (bVerbose)
-						CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [struct _CrtMemBlockHeader]\n",
+						CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [struct _CrtMemBlockHeader]\n",
 								entry_vaddr + sizeof(entry), user_addr);
 				}
 			}
@@ -2083,13 +2083,13 @@ page_walk_internal_2003(HEAP_SEGMENT_2003* heap_seg,// in => heap segment
 			if (bVerbose)
 			{
 				if (busy)
-					CA_PRINT("\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" busy [USER SPACE]\n",
+					CA_PRINT("\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" busy [USER SPACE]\n",
 						user_addr, user_addr+user_sz, user_sz);
 				else
-					CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" free [USER SPACE]\n",
+					CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE" free [USER SPACE]\n",
 						user_addr, user_addr+user_sz, user_sz);
 				if (user_addr+user_sz < entry_vaddr+entry_sz)
-					CA_PRINT("\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" [Unused Bytes]\n",
+					CA_PRINT("\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" [Unused Bytes]\n",
 							user_addr+user_sz, entry_vaddr+entry_sz);
 			}
 			if (addr && opBlock

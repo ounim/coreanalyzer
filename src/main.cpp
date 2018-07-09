@@ -167,9 +167,9 @@ int main(int argc, char** argv)
 			unsigned int nLevel = (unsigned int)val;
 			printf("Searching all references(up to %d levels of indirection) to ",	nLevel);
 			if (lObjectSize > 1)
-				printf("object starting at "PRINT_FORMAT_POINTER" size %ld\n", lpObjectVirtAddr, lObjectSize);
+				printf("object starting at " PRINT_FORMAT_POINTER " size %ld\n", lpObjectVirtAddr, lObjectSize);
 			else
-				printf("value "PRINT_FORMAT_POINTER"\n", lpObjectVirtAddr);
+				printf("value " PRINT_FORMAT_POINTER "\n", lpObjectVirtAddr);
 
 			if (lpObjectVirtAddr == 0)
 			{
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 			}
 			else if (!find_object_refs(lpObjectVirtAddr, lObjectSize, nLevel) )
 			{
-				printf("Couldn't find any reference to memory ["PRINT_FORMAT_POINTER", "PRINT_FORMAT_POINTER")\n",
+				printf("Couldn't find any reference to memory [" PRINT_FORMAT_POINTER ", " PRINT_FORMAT_POINTER ")\n",
 					lpObjectVirtAddr, lpObjectVirtAddr+lObjectSize);
 				//break;
 			}
@@ -220,7 +220,7 @@ int main(int argc, char** argv)
 		else if (opt == 6)
 		{
 			address_t lpPoolAddr = AskParam("Address", NULL, true);
-			if (!heap_walk(lpPoolAddr, false))
+			if (!heap_walk(lpPoolAddr, true))
 			{
 				//break;
 			}
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 		// Heap walk
 		else if (opt == 7)
 		{
-			if (!heap_walk(0, false))
+			if (!heap_walk(0, true))
 			{
 				//break;
 			}
@@ -303,9 +303,9 @@ static bool PrintBlockInfo(address_t addr)
 		else
 			printf("Free\n");
 
-		printf("\t[Start Addr] "PRINT_FORMAT_POINTER"\n", block_info.addr);
-		printf("\t[Block Size] "PRINT_FORMAT_SIZE"\n", block_info.size);
-		printf("\t[Offset] +"PRINT_FORMAT_POINTER"\n", addr - block_info.addr);
+		printf("\t[Start Addr] " PRINT_FORMAT_POINTER "\n", block_info.addr);
+		printf("\t[Block Size] " PRINT_FORMAT_SIZE "\n", block_info.size);
+		printf("\t[Offset] +" PRINT_FORMAT_POINTER "\n", addr - block_info.addr);
 	}
 	else
 	{

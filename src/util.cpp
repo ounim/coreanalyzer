@@ -187,7 +187,7 @@ static long IsString(char* ipCoreStart, ca_segment* segment,
 		if (len >= min_chars)
 		{
 			//if (ptr_addr)
-			//	printf(PRINT_FORMAT_POINTER": "PRINT_FORMAT_POINTER" (char*)=> [", ptr_addr, addr);
+			//	printf(PRINT_FORMAT_POINTER": " PRINT_FORMAT_POINTER " (char*)=> [", ptr_addr, addr);
 			//else
 			//	printf("0x%llx (char[])=> [", addr);
 			//PrintString(ipCoreStart, segment, addr);
@@ -405,6 +405,21 @@ bool PrintSegment()
 	return true;
 }
 
+address_t print_vptr_addr(address_t addr)
+{
+    address_t val = 0;
+    if (read_memory_wrapper(NULL,addr,&val, g_ptr_bit >> 3))
+    {
+        ca_segment* segment = get_segment(val, 1);
+        if (segment && (segment->m_type == ENUM_MODULE_DATA || segment->m_type == ENUM_MODULE_TEXT) )
+        {
+//            CA_PRINT(" (_vptr=" PRINT_FORMAT_POINTER ")\n", val);
+            return val;
+        }
+    }
+    return 0;
+}
+    
 void print_heap_ref(const struct object_reference* ref)
 {
 	int ptr_sz = g_ptr_bit >> 3;
@@ -413,7 +428,7 @@ void print_heap_ref(const struct object_reference* ref)
 	{
 		address_t vptr = 0;
 		if (read_memory_wrapper(NULL, ref->where.heap.addr, &vptr, ptr_sz))
-			CA_PRINT(" (_vptr="PRINT_FORMAT_POINTER")", vptr);
+			CA_PRINT(" (_vptr=" PRINT_FORMAT_POINTER ")", vptr);
 	}
 }
 
@@ -424,22 +439,22 @@ void print_register_ref(const struct object_reference* ref)
 		reg_name = get_register_name (ref->where.reg.reg_num);
 	else
 		reg_name = ref->where.reg.name;
-	CA_PRINT(" thread %d %s="PRINT_FORMAT_POINTER, ref->where.reg.tid, reg_name, ref->value);
+	CA_PRINT(" thread %d %s=" PRINT_FORMAT_POINTER, ref->where.reg.tid, reg_name, ref->value);
 }
 
 void print_stack_ref(const struct object_reference* ref)
 {
-	CA_PRINT(" thread %d rsp%+d @"PRINT_FORMAT_POINTER, ref->where.stack.tid, ref->where.stack.offset, ref->vaddr);
+	CA_PRINT( " thread %d rsp%+d @" PRINT_FORMAT_POINTER, ref->where.stack.tid, ref->where.stack.offset, ref->vaddr);
 	if (ref->value)
-		CA_PRINT(": "PRINT_FORMAT_POINTER, ref->value);
+		CA_PRINT( ": " PRINT_FORMAT_POINTER, ref->value);
 }
 
 void print_global_ref(const struct object_reference* ref)
 {
-	CA_PRINT (" %s", ref->where.module.name);
-	CA_PRINT (" @"PRINT_FORMAT_POINTER, ref->vaddr);
+	CA_PRINT ( " %s", ref->where.module.name);
+	CA_PRINT (" @" PRINT_FORMAT_POINTER, ref->vaddr);
 	if (ref->value)
-		CA_PRINT (": "PRINT_FORMAT_POINTER, ref->value);
+		CA_PRINT ( ": " PRINT_FORMAT_POINTER, ref->value);
 }
 
 void clear_addr_type_map()
@@ -455,7 +470,7 @@ address_t get_var_addr_by_name(const char* varname, bool ask)
 {
 	if (ask)
 	{
-		printf("Please input the address of variable %s\n", varname);
+		printf( "Please input the address of variable %s\n", varname);
 #ifdef __GNUC__
 		printf("You can find it by command \"(gdb)print &%s\"\n", varname);
 #else

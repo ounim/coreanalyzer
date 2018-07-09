@@ -87,6 +87,6 @@ struct MemHistogram
 extern void display_mem_histogram(const char*);
 extern void init_mem_histogram(unsigned int nbuckets);
 extern void release_mem_histogram(void);
-extern void add_block_mem_histogram(size_t, bool, unsigned int);
+extern int add_block_mem_histogram(size_t, bool, unsigned int);
 
 #endif

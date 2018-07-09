@@ -9,6 +9,7 @@
 #include "segment.h"
 #include "stl_container.h"
 #include "search.h"
+#include "util.h"
 
 // Used to search for variables that allocate/reach the most heap memory
 struct heap_owner
@@ -224,9 +225,9 @@ bool heap_command_impl(char* args)
 					CA_PRINT("\t[In-use]\n");
 				else
 					CA_PRINT("\t[Free]\n");
-				CA_PRINT("\t[Address] "PRINT_FORMAT_POINTER"\n", heap_block.addr);
-				CA_PRINT("\t[Size]    "PRINT_FORMAT_SIZE"\n", heap_block.size);
-				CA_PRINT("\t[Offset]  "PRINT_FORMAT_SIZE"\n", addr - heap_block.addr);
+				CA_PRINT("\t[Address] " PRINT_FORMAT_POINTER "\n", heap_block.addr);
+				CA_PRINT("\t[Size]    " PRINT_FORMAT_SIZE "\n", heap_block.size);
+				CA_PRINT("\t[Offset]  " PRINT_FORMAT_SIZE "\n", addr - heap_block.addr);
 			}
 			else
 				CA_PRINT("[Error] Failed to query the memory block\n");
@@ -339,7 +340,7 @@ bool ref_command_impl(char* args)
 			size = 1;
 		if (level == 0)
 			level = 1;
-		CA_PRINT("Search for thread references to "PRINT_FORMAT_POINTER" size "PRINT_FORMAT_SIZE" up to "PRINT_FORMAT_SIZE" levels of indirection\n",
+		CA_PRINT("Search for thread references to " PRINT_FORMAT_POINTER " size " PRINT_FORMAT_SIZE " up to " PRINT_FORMAT_SIZE " levels of indirection\n",
 					addr, size, level);
 		rc = find_object_refs_on_threads(addr, size, level);
 	}
@@ -347,14 +348,14 @@ bool ref_command_impl(char* args)
 	{
 		if (size == 0)
 		{
-			CA_PRINT("Search for object type associated with "PRINT_FORMAT_POINTER"\n", addr);
+			CA_PRINT("Search for object type associated with " PRINT_FORMAT_POINTER "\n", addr);
 			rc = find_object_type(addr);
 		}
 		else
 		{
 			if (level == 0)
 				level = 1;
-			CA_PRINT("Search for references to "PRINT_FORMAT_POINTER" size "PRINT_FORMAT_SIZE" up to "PRINT_FORMAT_SIZE" levels of indirection\n",
+			CA_PRINT("Search for references to " PRINT_FORMAT_POINTER " size " PRINT_FORMAT_SIZE " up to " PRINT_FORMAT_SIZE " levels of indirection\n",
 						addr, size, level);
 			rc = find_object_refs(addr, size, level);
 		}
@@ -371,7 +372,7 @@ bool ref_command_impl(char* args)
 static void
 print_segment(struct ca_segment* segment)
 {
-	CA_PRINT("["PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"] %6ldK  %c%c%c ",
+	CA_PRINT("[" PRINT_FORMAT_POINTER " - " PRINT_FORMAT_POINTER "] %6ldK  %c%c%c ",
 		segment->m_vaddr, segment->m_vaddr+segment->m_vsize,
 		segment->m_vsize/1024,
 		segment->m_read?'r':'-', segment->m_write?'w':'-', segment->m_exec?'x':'-');
@@ -585,8 +586,8 @@ struct inuse_block* build_inuse_heap_blocks(unsigned long* opCount)
 				if (cursor->addr + cursor->size > (cursor+1)->addr)
 				{
 					CA_PRINT("Internal error: in-use array is not properly sorted at %ld\n", count);
-					CA_PRINT("\t[%ld] "PRINT_FORMAT_POINTER" size=%ld\n", count, cursor->addr, cursor->size);
-					CA_PRINT("\t[%ld] "PRINT_FORMAT_POINTER"\n", count+1, (cursor+1)->addr);
+					CA_PRINT("\t[%ld] " PRINT_FORMAT_POINTER " size=%ld\n", count, cursor->addr, cursor->size);
+					CA_PRINT("\t[%ld] " PRINT_FORMAT_POINTER "\n", count+1, (cursor+1)->addr);
 					free (blocks);
 					*opCount = 0;
 					return NULL;
@@ -661,9 +662,9 @@ void print_size(size_t sz)
 	if (sz > GB)
 		CA_PRINT("%.1fGB", (double)sz/(double)GB);
 	else if (sz > MB)
-		CA_PRINT(PRINT_FORMAT_SIZE"MB", sz/MB);
+		CA_PRINT(PRINT_FORMAT_SIZE "MB", sz/MB);
 	else if (sz > KB)
-		CA_PRINT(PRINT_FORMAT_SIZE"KB", sz/KB);
+		CA_PRINT(PRINT_FORMAT_SIZE "KB", sz/KB);
 	else
 		CA_PRINT(PRINT_FORMAT_SIZE, sz);
 }
@@ -673,9 +674,9 @@ static void fprint_size(char* buf, size_t sz)
 	if (sz > GB)
 		sprintf(buf, "%.1fGB", (double)sz/(double)GB);
 	else if (sz > MB)
-		sprintf(buf, PRINT_FORMAT_SIZE"MB", sz/MB);
+		sprintf(buf, PRINT_FORMAT_SIZE "MB", sz/MB);
 	else if (sz > KB)
-		sprintf(buf, PRINT_FORMAT_SIZE"KB", sz/KB);
+		sprintf(buf, PRINT_FORMAT_SIZE "KB", sz/KB);
 	else
 		sprintf(buf, PRINT_FORMAT_SIZE, sz);
 }
@@ -705,7 +706,7 @@ bool biggest_blocks(unsigned int num)
 		CA_PRINT("Top %d biggest in-use heap memory blocks:\n", num);
 		for (i=0; i<num; i++)
 		{
-			CA_PRINT("\taddr="PRINT_FORMAT_POINTER"  size="PRINT_FORMAT_SIZE" (",
+			CA_PRINT("\taddr=" PRINT_FORMAT_POINTER "  size=" PRINT_FORMAT_SIZE " (",
 					blocks[i].addr, blocks[i].size);
 			print_size (blocks[i].size);
 			CA_PRINT(")\n");
@@ -1209,8 +1210,9 @@ bool display_heap_leak_candidates(void)
 		if (!is_visited(qv_bitmap, cur_index))
 		{
 			leak_count++;
-			CA_PRINT("[%ld] addr="PRINT_FORMAT_POINTER" size="PRINT_FORMAT_SIZE"\n",
+			CA_PRINT("[%ld] addr=" PRINT_FORMAT_POINTER " size=" PRINT_FORMAT_SIZE "\n",
 					leak_count, blk->addr, blk->size);
+                        print_vptr_addr(blk->addr);
 			total_leak_bytes += blk->size;
 		}
 	}
@@ -1289,14 +1291,14 @@ void init_mem_histogram(unsigned int nbuckets)
 	}
 }
 
-void add_block_mem_histogram(size_t size, bool inuse, unsigned int num_block)
+int add_block_mem_histogram(size_t size, bool inuse, unsigned int num_block)
 {
 	unsigned int n;
 
 	if (!g_mem_hist.num_buckets || !g_mem_hist.bucket_sizes
 		|| !g_mem_hist.inuse_cnt || !g_mem_hist.inuse_bytes
 		|| !g_mem_hist.free_cnt || !g_mem_hist.free_bytes)
-		return;
+		return 0;
 
 	for (n = 0; n < g_mem_hist.num_buckets; n++)
 	{
@@ -1313,6 +1315,7 @@ void add_block_mem_histogram(size_t size, bool inuse, unsigned int num_block)
 		g_mem_hist.free_cnt[n] += num_block;
 		g_mem_hist.free_bytes[n] += size * num_block;
 	}
+        return n;
 }
 
 static void fill_space_til_pos(char* buf, size_t to_pos)

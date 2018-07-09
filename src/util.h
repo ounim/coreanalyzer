@@ -51,5 +51,6 @@ extern bool FileReadable(const char* ipFilePath);
 extern const char* RemoveLineReturn(char* ipLineBuf);
 extern bool PrintSegment();
 extern const char* get_register_name(int tid);
+extern address_t print_vptr_addr(address_t addr);
 
 #endif // _UTIL_H

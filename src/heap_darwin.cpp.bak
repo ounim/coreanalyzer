@@ -109,10 +109,10 @@ bool heap_walk(address_t addr, bool verbose)
 				address_t addr = block_addr(regionp->start);
 				size_t size = regionp->end - addr;
 				if (inuse)
-					CA_PRINT("\t\tlarge block "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=%ld in-use\n",
+					CA_PRINT("\t\tlarge block " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=%ld in-use\n",
 							addr, addr + size, size);
 				else
-					CA_PRINT("\tlarge block "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=%ld cached\n",
+					CA_PRINT("\tlarge block " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=%ld cached\n",
 							addr, addr + size, size);
 			}
 			if (regionp->type == ENUM_TINY_REGION || regionp->type == ENUM_SMALL_REGION)
@@ -725,7 +725,7 @@ static INLINE uintptr_t free_list_gen_checksum(uintptr_t ptr)
 
 static void free_list_checksum_botch(szone_t *szone, free_list_t *ptr)
 {
-	CA_PRINT("incorrect checksum for freed object "PRINT_FORMAT_POINTER"- object was probably modified after being freed.\n",
+	CA_PRINT("incorrect checksum for freed object " PRINT_FORMAT_POINTER "- object was probably modified after being freed.\n",
 			(address_t) ptr);
 }
 
@@ -786,7 +786,7 @@ static bool small_region_walk(szone_t* szonep,
 			&meta_headers[0], sizeof(meta_headers)))
 	{
 		CA_PRINT(
-				"Failed to read small_meta_words of small region "PRINT_FORMAT_POINTER"\n",
+				"Failed to read small_meta_words of small region " PRINT_FORMAT_POINTER "\n",
 				(address_t) region);
 		return false;
 	}
@@ -794,7 +794,7 @@ static bool small_region_walk(szone_t* szonep,
 			&mag_index, sizeof(mag_index)))
 	{
 		CA_PRINT(
-				"Failed to read mag_index of small region "PRINT_FORMAT_POINTER"\n",
+				"Failed to read mag_index of small region " PRINT_FORMAT_POINTER "\n",
 				(address_t) region);
 		return false;
 	}
@@ -802,7 +802,7 @@ static bool small_region_walk(szone_t* szonep,
 	mag_addr = (address_t) szonep->small_magazines + sizeof(magazine_t) * mag_index;
 	if (!read_memory_wrapper(NULL, mag_addr, &small_mag, sizeof(magazine_t)))
 	{
-		CA_PRINT("Failed to read szone's small_magazines[%d] at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read szone's small_magazines[%d] at " PRINT_FORMAT_POINTER "\n",
 				mag_index, mag_addr);
 		return false;
 	}
@@ -815,7 +815,7 @@ static bool small_region_walk(szone_t* szonep,
 	}
 
 	//if (verbose)
-	CA_PRINT("\tsmall region "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" Total ",
+	CA_PRINT("\tsmall region " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" Total ",
 			ptr, region_end);
 	print_size(region_end - ptr);
 	if (display_each_block)
@@ -832,21 +832,21 @@ static bool small_region_walk(szone_t* szonep,
 			msize = msize_and_free;
 			if (!msize)
 			{
-				CA_PRINT("invariant broken: null msize ptr="PRINT_FORMAT_POINTER" num_small_regions=%ld end="PRINT_FORMAT_POINTER"\n",
+				CA_PRINT("invariant broken: null msize ptr=" PRINT_FORMAT_POINTER " num_small_regions=%ld end="PRINT_FORMAT_POINTER"\n",
 						ptr, szonep->num_small_regions, region_end);
 				rc = false;
 				break;
 			}
 			if (SMALL_BYTES_FOR_MSIZE(msize) > szonep->large_threshold)
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" this small msize=%d - size is too large\n",
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " this small msize=%d - size is too large\n",
 						ptr, msize_and_free);
 				rc = false;
 				break;
 			}
 			if (display_each_block)
 			{
-				CA_PRINT("\t\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=%d in-use\n",
+				CA_PRINT("\t\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=%d in-use\n",
 						ptr, ptr + SMALL_BYTES_FOR_MSIZE(msize),
 						SMALL_BYTES_FOR_MSIZE(msize));
 			}
@@ -865,14 +865,14 @@ static bool small_region_walk(szone_t* szonep,
 			follower = (msize_t *) FOLLOWING_SMALL_PTR(ptr, msize);
 			if (!msize)
 			{
-				CA_PRINT("invariant broken for free block "PRINT_FORMAT_POINTER" this msize=%d\n",
+				CA_PRINT("invariant broken for free block " PRINT_FORMAT_POINTER " this msize=%d\n",
 						ptr, msize);
 				rc = false;
 				break;
 			}
 			if (prev_free)
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" (2 free in a row)\n",	ptr);
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " (2 free in a row)\n",	ptr);
 				rc = false;
 				break;
 			}
@@ -882,7 +882,7 @@ static bool small_region_walk(szone_t* szonep,
 			//if (previous && !SMALL_PTR_IS_FREE(previous))
 			if (previous && !(meta_headers[SMALL_META_INDEX_FOR_PTR(previous)] & SMALL_IS_FREE))
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" (previous "PRINT_FORMAT_POINTER" is not a free pointer)\n",
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " (previous "PRINT_FORMAT_POINTER" is not a free pointer)\n",
 						ptr, (address_t) free_head->previous.p);
 				rc = false;
 				break;
@@ -890,14 +890,14 @@ static bool small_region_walk(szone_t* szonep,
 			//if (next && !SMALL_PTR_IS_FREE(next))
 			if (next && !(meta_headers[SMALL_META_INDEX_FOR_PTR(next)] & SMALL_IS_FREE))
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" (next is not a free pointer)\n", ptr);
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " (next is not a free pointer)\n", ptr);
 				rc = false;
 				break;
 			}
 			read_memory_wrapper(NULL, (address_t) &follower[-1], &prev_msize, sizeof(prev_msize));
 			if (prev_msize != msize)
 			{
-				CA_PRINT("invariant broken for small free "PRINT_FORMAT_POINTER" followed by "PRINT_FORMAT_POINTER" in region ["PRINT_FORMAT_POINTER"-"PRINT_FORMAT_POINTER"] "
+				CA_PRINT("invariant broken for small free " PRINT_FORMAT_POINTER " followed by "PRINT_FORMAT_POINTER" in region ["PRINT_FORMAT_POINTER"-"PRINT_FORMAT_POINTER"] "
 						"(end marker incorrect) should be %d; in fact %d\n",
 						ptr, (address_t) follower, (address_t) SMALL_REGION_ADDRESS(region), region_end,
 						msize, prev_msize);
@@ -907,7 +907,7 @@ static bool small_region_walk(szone_t* szonep,
 
 			if (display_each_block)
 			{
-				CA_PRINT("\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=%d free\n",
+				CA_PRINT("\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=%d free\n",
 						ptr, (address_t) follower, SMALL_BYTES_FOR_MSIZE(msize));
 			}
 			num_free++;
@@ -1007,20 +1007,20 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 	// read meta-data of this tiny region
 	if (!read_memory_wrapper(NULL, (address_t) &((tiny_region_t) region)->pairs, &pairs[0], sizeof(pairs)))
 	{
-		CA_PRINT("Failed to read pairs of tiny region "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read pairs of tiny region " PRINT_FORMAT_POINTER "\n",
 				(address_t) region);
 		return false;
 	}
 	else if (!read_memory_wrapper(NULL,	(address_t) &(((tiny_region_t) region)->trailer).mag_index,
 			&mag_index, sizeof(mag_index)))		// MAGAZINE_INDEX_FOR_TINY_REGION(region);
 	{
-		CA_PRINT("Failed to read mag_index of tiny region "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read mag_index of tiny region " PRINT_FORMAT_POINTER "\n",
 				(address_t) region);
 		return false;
 	}
 	else if (mag_index > szonep->num_tiny_magazines - 1)
 	{
-		CA_PRINT("Error: Region "PRINT_FORMAT_POINTER" mag_index %d is out of szone's range [0...%d]\n",
+		CA_PRINT("Error: Region " PRINT_FORMAT_POINTER " mag_index %d is out of szone's range [0...%d]\n",
 				(address_t) region, mag_index, szonep->num_tiny_magazines - 1);
 		return false;
 	}
@@ -1029,7 +1029,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 	mag_addr = (address_t) szonep->tiny_magazines + sizeof(magazine_t) * mag_index;
 	if (!read_memory_wrapper(NULL, mag_addr, &tiny_mag, sizeof(magazine_t)))
 	{
-		CA_PRINT("Failed to read szone's tiny_magazines[%d] at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read szone's tiny_magazines[%d] at " PRINT_FORMAT_POINTER "\n",
 				mag_index, mag_addr);
 		return false;
 	}
@@ -1045,7 +1045,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			msize = get_tiny_meta_header((void *) (ptr - TINY_QUANTUM),	&is_free, pairs);
 			if (is_free || (msize != 1))
 			{
-				CA_PRINT("invariant broken for leader block "PRINT_FORMAT_POINTER" - %d %d\n",
+				CA_PRINT("invariant broken for leader block " PRINT_FORMAT_POINTER " - %d %d\n",
 						ptr - TINY_QUANTUM, msize, is_free);
 				return false;
 			}
@@ -1058,7 +1058,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 		region_end -= tiny_mag.mag_bytes_free_at_end;
 
 	//if (verbose)
-	CA_PRINT("\ttiny region "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" Total ",
+	CA_PRINT("\ttiny region " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" Total ",
 			ptr, region_end);
 	print_size(region_end - ptr);
 	if (display_each_block)
@@ -1074,7 +1074,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 		// If the block's size is 65536 (msize = 0) then since we're not the first entry the size is corrupt
 		if (!msize)
 		{
-			CA_PRINT("invariant broken for tiny block "PRINT_FORMAT_POINTER" this msize=%d - size is too small\n",
+			CA_PRINT("invariant broken for tiny block " PRINT_FORMAT_POINTER " this msize=%d - size is too small\n",
 					ptr, msize);
 			rc = false;
 			break;
@@ -1085,14 +1085,14 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			prev_free = 0;
 			if (msize > (NUM_TINY_SLOTS - 1))
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" this tiny msize=%d - size is too large\n",
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " this tiny msize=%d - size is too large\n",
 						ptr, msize);
 				rc = false;
 				break;
 			}
 			if (display_each_block)
 			{
-				CA_PRINT("\t\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=%d in-use\n",
+				CA_PRINT("\t\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=%d in-use\n",
 						ptr, ptr + TINY_BYTES_FOR_MSIZE(msize),
 						TINY_BYTES_FOR_MSIZE(msize));
 			}
@@ -1107,7 +1107,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			// Free blocks must have been coalesced, we cannot have a free block following another free block.
 			if (prev_free)
 			{
-				CA_PRINT("invariant broken for free block "PRINT_FORMAT_POINTER" this tiny msize=%d: two free blocks in a row\n",
+				CA_PRINT("invariant broken for free block " PRINT_FORMAT_POINTER " this tiny msize=%d: two free blocks in a row\n",
 						ptr, msize);
 				rc = false;
 				break;
@@ -1120,13 +1120,13 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			// previous and next may be from another tiny region
 			if (previous && !tiny_meta_header_is_free(previous,	region == TINY_REGION_FOR_PTR(previous) ? pairs : NULL))
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" (previous "PRINT_FORMAT_POINTER" is not a free pointer)\n",
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " (previous "PRINT_FORMAT_POINTER" is not a free pointer)\n",
 						(address_t) ptr, (address_t) previous);
 				rc = false;
 			}
 			if (next && !tiny_meta_header_is_free(next,	region == TINY_REGION_FOR_PTR(next) ? pairs : NULL))
 			{
-				CA_PRINT("invariant broken for "PRINT_FORMAT_POINTER" (next in free list "PRINT_FORMAT_POINTER" is not a free pointer)\n",
+				CA_PRINT("invariant broken for " PRINT_FORMAT_POINTER " (next in free list "PRINT_FORMAT_POINTER" is not a free pointer)\n",
 						(address_t) ptr, (address_t) next);
 				rc = false;
 				//break;
@@ -1136,7 +1136,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			if (((uintptr_t) follower != region_end)
 					&& (get_tiny_previous_free_msize(follower, pairs) != msize))
 			{
-				CA_PRINT("invariant broken for tiny free "PRINT_FORMAT_POINTER" followed by "PRINT_FORMAT_POINTER" in region ["PRINT_FORMAT_POINTER"-"PRINT_FORMAT_POINTER"] "
+				CA_PRINT("invariant broken for tiny free " PRINT_FORMAT_POINTER " followed by "PRINT_FORMAT_POINTER" in region ["PRINT_FORMAT_POINTER"-"PRINT_FORMAT_POINTER"] "
 						"(end marker incorrect) should be %d; in fact %d\n",
 						(address_t) ptr, (address_t) follower,
 						(address_t) TINY_REGION_ADDRESS(region), region_end,
@@ -1146,7 +1146,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			}
 			if (display_each_block)
 			{
-				CA_PRINT("\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=%d free\n",
+				CA_PRINT("\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=%d free\n",
 						ptr, (address_t) follower, TINY_BYTES_FOR_MSIZE(msize));
 			}
 			num_free++;
@@ -1160,7 +1160,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 	// Ensure that we scanned the entire region
 	if (rc && ptr != region_end)
 	{
-		CA_PRINT("invariant broken for region end "PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("invariant broken for region end " PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER"\n",
 				ptr, region_end);
 		rc = false;
 	}
@@ -1172,7 +1172,7 @@ tiny_region_walk(szone_t* szonep, region_t region, bool display_each_block, stru
 			msize = get_tiny_meta_header((void *) ptr, &is_free, pairs);
 			if (is_free || (msize != 1))
 			{
-				CA_PRINT("invariant broken for blocker block "PRINT_FORMAT_POINTER" - %d %d\n",
+				CA_PRINT("invariant broken for blocker block " PRINT_FORMAT_POINTER " - %d %d\n",
 						ptr, msize, is_free);
 				rc = false;
 			}
@@ -1212,7 +1212,7 @@ szone_walk(szone_t* szonep, bool display_each_block, struct ca_region_stats* sta
 	if (!read_memory_wrapper(NULL, (address_t) szonep->tiny_region_generation,
 			&region_hash_gen, sizeof(region_hash_gen)))
 	{
-		CA_PRINT("Failed to read zone's tiny_region_generation at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read zone's tiny_region_generation at " PRINT_FORMAT_POINTER "\n",
 				(address_t) szonep->tiny_region_generation);
 		return false;
 	}
@@ -1223,7 +1223,7 @@ szone_walk(szone_t* szonep, bool display_each_block, struct ca_region_stats* sta
 		if (!read_memory_wrapper(NULL, (address_t) region_hash_gen.hashed_regions, &regions[0],
 				sizeof(region_t) * num_regions))
 		{
-			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at " PRINT_FORMAT_POINTER "\n",
 					(address_t) region_hash_gen.hashed_regions);
 			return false;
 		}
@@ -1248,7 +1248,7 @@ szone_walk(szone_t* szonep, bool display_each_block, struct ca_region_stats* sta
 	if (!read_memory_wrapper(NULL, (address_t) szonep->small_region_generation,
 			&region_hash_gen, sizeof(region_hash_gen)))
 	{
-		CA_PRINT("Failed to read zone's tiny_region_generation at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read zone's tiny_region_generation at " PRINT_FORMAT_POINTER "\n",
 				(address_t) szonep->small_region_generation);
 		return false;
 	}
@@ -1259,7 +1259,7 @@ szone_walk(szone_t* szonep, bool display_each_block, struct ca_region_stats* sta
 		if (!read_memory_wrapper(NULL, (address_t) region_hash_gen.hashed_regions, &regions[0],
 				sizeof(region_t) * num_regions))
 		{
-			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at " PRINT_FORMAT_POINTER "\n",
 					(address_t) region_hash_gen.hashed_regions);
 			return false;
 		}
@@ -1294,7 +1294,7 @@ szone_walk(szone_t* szonep, bool display_each_block, struct ca_region_stats* sta
 			{
 				stats.num_inuse++;
 				stats.inuse_bytes += entry.size;
-				CA_PRINT("\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=",
+				CA_PRINT("\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=",
 						entry.address, entry.address + entry.size);
 				print_size(entry.size);
 				CA_PRINT("\n");
@@ -1309,7 +1309,7 @@ szone_walk(szone_t* szonep, bool display_each_block, struct ca_region_stats* sta
 			{
 				stats.num_free++;
 				stats.free_bytes += entryp->size;
-				CA_PRINT("\t\t"PRINT_FORMAT_POINTER" - "PRINT_FORMAT_POINTER" size=",
+				CA_PRINT("\t\t" PRINT_FORMAT_POINTER " - "PRINT_FORMAT_POINTER" size=",
 						entryp->address, entryp->address + entryp->size);
 				print_size(entryp->size);
 				CA_PRINT("\n");
@@ -1401,20 +1401,20 @@ build_tiny_region(unsigned int zone_index, szone_t* szonep, region_t region)
 	if (!read_memory_wrapper(NULL, (address_t) &((tiny_region_t) region)->pairs,
 			&pairs[0], sizeof(pairs)))
 	{
-		CA_PRINT("Failed to read pairs of tiny region "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read pairs of tiny region " PRINT_FORMAT_POINTER "\n",
 				(address_t) region);
 		return false;
 	}
 	else if (!read_memory_wrapper(NULL, (address_t) &(((tiny_region_t) region)->trailer).mag_index,
 			&mag_index, sizeof(mag_index)))		// MAGAZINE_INDEX_FOR_TINY_REGION(region)
 	{
-		CA_PRINT("Failed to read mag_index of tiny region "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read mag_index of tiny region " PRINT_FORMAT_POINTER "\n",
 				(address_t) region);
 		return false;
 	}
 	else if (mag_index > szonep->num_tiny_magazines - 1)
 	{
-		CA_PRINT("Error: Region "PRINT_FORMAT_POINTER" mag_index %d is out of szone's range [0...%d]\n",
+		CA_PRINT("Error: Region " PRINT_FORMAT_POINTER " mag_index %d is out of szone's range [0...%d]\n",
 				(address_t) region, mag_index, szonep->num_tiny_magazines - 1);
 		return false;
 	}
@@ -1423,7 +1423,7 @@ build_tiny_region(unsigned int zone_index, szone_t* szonep, region_t region)
 	mag_addr = (address_t) szonep->tiny_magazines + sizeof(magazine_t) * mag_index;
 	if (!read_memory_wrapper(NULL, mag_addr, &tiny_mag, sizeof(magazine_t)))
 	{
-		CA_PRINT("Failed to read szone's tiny_magazines[%d] at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read szone's tiny_magazines[%d] at " PRINT_FORMAT_POINTER "\n",
 				mag_index, mag_addr);
 		return false;
 	}
@@ -1455,7 +1455,7 @@ build_regions(unsigned int zone_index, szone_t* szonep)
 	if (!read_memory_wrapper(NULL, (address_t) szonep->tiny_region_generation,
 			&region_hash_gen, sizeof(region_hash_gen)))
 	{
-		CA_PRINT("Failed to read zone's tiny_region_generation at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read zone's tiny_region_generation at " PRINT_FORMAT_POINTER "\n",
 				(address_t) szonep->tiny_region_generation);
 		return false;
 	}
@@ -1466,7 +1466,7 @@ build_regions(unsigned int zone_index, szone_t* szonep)
 		if (!read_memory_wrapper(NULL, (address_t) region_hash_gen.hashed_regions, &regions[0],
 				sizeof(region_t) * num_regions))
 		{
-			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at " PRINT_FORMAT_POINTER "\n",
 					(address_t) region_hash_gen.hashed_regions);
 			return false;
 		}
@@ -1484,7 +1484,7 @@ build_regions(unsigned int zone_index, szone_t* szonep)
 	if (!read_memory_wrapper(NULL, (address_t) szonep->small_region_generation,
 			&region_hash_gen, sizeof(region_hash_gen)))
 	{
-		CA_PRINT("Failed to read zone's tiny_region_generation at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read zone's tiny_region_generation at " PRINT_FORMAT_POINTER "\n",
 				(address_t) szonep->small_region_generation);
 		return false;
 	}
@@ -1495,7 +1495,7 @@ build_regions(unsigned int zone_index, szone_t* szonep)
 		if (!read_memory_wrapper(NULL, (address_t) region_hash_gen.hashed_regions, &regions[0],
 				sizeof(region_t) * num_regions))
 		{
-			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to read zone's tiny_region_generation->hashed_regions at " PRINT_FORMAT_POINTER "\n",
 					(address_t) region_hash_gen.hashed_regions);
 			return false;
 		}
@@ -1608,7 +1608,7 @@ static bool build_szones(void)
 	if (!read_memory_wrapper(NULL, malloc_num_zone_vaddr,
 			&g_ca_zones.malloc_num_zone, sizeof(g_ca_zones.malloc_num_zone)))
 	{
-		CA_PRINT("Failed to read global variable malloc_num_zone at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read global variable malloc_num_zone at " PRINT_FORMAT_POINTER "\n",
 				malloc_num_zone_vaddr);
 		return false;
 	}
@@ -1620,7 +1620,7 @@ static bool build_szones(void)
 	// read the value of malloc_zones
 	if (!read_memory_wrapper(NULL, malloc_zone_vaddr, &szone_array_addr, sizeof(szone_array_addr)))
 	{
-		CA_PRINT("Failed to read global variable malloc_zones at "PRINT_FORMAT_POINTER"\n",
+		CA_PRINT("Failed to read global variable malloc_zones at " PRINT_FORMAT_POINTER "\n",
 				malloc_zone_vaddr);
 		return false;
 	}
@@ -1638,14 +1638,14 @@ static bool build_szones(void)
 		if (!read_memory_wrapper(NULL, szone_array_addr + sizeof(szone_t*) * zone_index, &szone_addr,
 				sizeof(szone_addr)))
 		{
-			CA_PRINT("Failed to read global variable malloc_zones[%d] at "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to read global variable malloc_zones[%d] at " PRINT_FORMAT_POINTER "\n",
 					zone_index,	szone_array_addr + sizeof(szone_t*) * zone_index);
 			rc = false;
 			break;
 		}
 		if (!read_memory_wrapper(NULL, szone_addr, szonep, sizeof(szone_t)))
 		{
-			CA_PRINT("Failed to read szone_t at "PRINT_FORMAT_POINTER"\n",
+			CA_PRINT("Failed to read szone_t at " PRINT_FORMAT_POINTER "\n",
 					szone_addr);
 			rc = false;
 			break;
@@ -1844,7 +1844,7 @@ static void build_tiny_region_blocks(struct ca_region* regionp)
 static void check_sorted_region_blocks(struct ca_region* regionp)
 {
 	if (regionp->corrupt)
-		CA_PRINT("Corrupted region "PRINT_FORMAT_POINTER"\n", regionp->start);
+		CA_PRINT("Corrupted region " PRINT_FORMAT_POINTER "\n", regionp->start);
 	else
 	{
 		unsigned int index;
@@ -1852,10 +1852,10 @@ static void check_sorted_region_blocks(struct ca_region* regionp)
 		{
 			if (block_addr(regionp->blocks[index]) >= block_addr(regionp->blocks[index+1]))
 			{
-				CA_PRINT("Internal error: region "PRINT_FORMAT_POINTER" incorrectly sorted blocks(%d)\n",
+				CA_PRINT("Internal error: region " PRINT_FORMAT_POINTER " incorrectly sorted blocks(%d)\n",
 						regionp->start, regionp->num_blocks);
-				CA_PRINT("\t[%d] addr="PRINT_FORMAT_POINTER"\n", index, regionp->blocks[index]);
-				CA_PRINT("\t[%d] addr="PRINT_FORMAT_POINTER"\n", index+1, regionp->blocks[index]);
+				CA_PRINT("\t[%d] addr=" PRINT_FORMAT_POINTER "\n", index, regionp->blocks[index]);
+				CA_PRINT("\t[%d] addr=" PRINT_FORMAT_POINTER "\n", index+1, regionp->blocks[index]);
 			}
 		}
 	}
